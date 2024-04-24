@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Approval</title>
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        input, button {
+            margin: 10px;
+            padding: 8px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            color: green;
+        }
+
+        #walletAddress {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="walletAddress"></div>
+    <div class="container">
+        <h1>Token Approval</h1>
+        <button id="connectWalletBtn" onclick="toggleWalletConnection()">Connect Wallet</button>
+        <div id="tokenInfo" style="display: none;">
+            <input type="text" id="tokenAddress" placeholder="Enter token contract address">
+            <input type="text" id="spenderAddress" placeholder="Enter spender address">
+            <input type="number" id="amount" placeholder="Enter amount">
+            <button onclick="approve()">Approve</button>
+        </div>
+        <p id="status"></p>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
+    <script>
+        let isConnected = false;
+
+        async function toggleWalletConnection() {
+            if (!isConnected) {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    if (accounts.length > 0) {
+                        isConnected = true;
+                        document.getElementById('connectWalletBtn').innerText = 'Disconnect Wallet';
+                        document.getElementById('tokenInfo').style.display = 'block';
+                        document.getElementById('walletAddress').innerText = 'Connected Wallet: ' + accounts[0];
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+            } else {
+                isConnected = false;
+                document.getElementById('connectWalletBtn').innerText = 'Connect Wallet';
+                document.getElementById('tokenInfo').style.display = 'none';
+                document.getElementById('walletAddress').innerText = '';
+            }
+        }
+
+        async function approve() {
+            if (!isConnected) {
+                alert('Please connect your wallet first');
+                return;
+            }
+
+            const tokenAddress = document.getElementById('tokenAddress').value;
+            const spenderAddress = document.getElementById('spenderAddress').value;
+            const amount = document.getElementById('amount').value;
+
+            try {
+                const web3 = new Web3(window.ethereum);
+                const abi = [ /* Paste your ERC20 token contract ABI here */ ];
+                const tokenContract = new web3.eth.Contract(abi, tokenAddress);
+
+                const accounts = await web3.eth.getAccounts();
+                const account = accounts[0];
+
+                // Approve spender to spend 'amount' of tokens on your behalf
+                await tokenContract.methods.approve(spenderAddress, amount).send({ from: account });
+
+                document.getElementById('status').innerHTML = `Approved ${amount} tokens for ${spenderAddress}`;
+            } catch (error) {
+                console.error(error);
+                document.getElementById('status').innerHTML = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
+
